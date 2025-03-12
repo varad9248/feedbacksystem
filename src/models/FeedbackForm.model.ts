@@ -16,4 +16,6 @@ const FormSchema = new mongoose.Schema({
     totalResponses: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
   });
+
+  export const FeedbackForm = mongoose.models.FeedbackForm || mongoose.model("FeedbackForm", FormSchema);
   

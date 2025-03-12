@@ -7,4 +7,6 @@ const LeaderboardSchema = new mongoose.Schema({
     totalPoints: { type: Number, default: 0 },
     rank: { type: Number }
   });
+
+export default mongoose.models.Leaderboard || mongoose.model("Leaderboard" , LeaderboardSchema);
   

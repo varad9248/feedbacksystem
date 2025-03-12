@@ -10,7 +10,10 @@ const UserSchema = new mongoose.Schema({
     createdForms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Form" }],
     feedbackGiven: [{ type: mongoose.Schema.Types.ObjectId, ref: "Feedback" }],
     points: { type: Number, default: 0 }, // Gamification
-    badges: [{ type: String }], // Array of awarded badges
+    badges: [{ type: String }],
+    clerkId: { type: String, unique: true, required: true },
     createdAt: { type: Date, default: Date.now }
   });
+
+export const User = mongoose.models.User || mongoose.model("User", UserSchema);
   
