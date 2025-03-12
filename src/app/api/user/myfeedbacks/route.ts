@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(feedbacks, { status: 200 });
   } catch (error) {
+    console.log(error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

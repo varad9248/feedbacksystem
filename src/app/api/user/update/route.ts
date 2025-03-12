@@ -30,6 +30,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (error) {
+    console.log(error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
