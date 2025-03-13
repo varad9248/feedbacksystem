@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
-import connectDB from "@/db/connectDB";
+import  {connectDB } from "@/db/connectDB";
 import { Feedback } from "@/models/Feedback.model";
 
 export async function GET(req: NextRequest) {

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Mongoose } from "mongoose";
 
 const MONGO_URI: string | undefined = process.env.MONGO_URI;
 
@@ -6,39 +7,30 @@ if (!MONGO_URI) {
   throw new Error("❌ MONGO_URI is missing in environment variables.");
 }
 
-// Fix global type
-interface GlobalWithMongoose {
-  mongoose: {
-    conn: mongoose.Connection | null;
-    promise: Promise<mongoose.Connection> | null;
-  };
+interface MongooseConn {
+  conn : Mongoose | null,
+  promise : Promise<Mongoose> | null
 }
 
-declare global {
-  var mongoose: GlobalWithMongoose["mongoose"];
-}
+let cached : MongooseConn = (global as any).mongoose;
 
-global.mongoose = global.mongoose || { conn: null, promise: null };
-
-const connectDB = async (): Promise<void> => {
-  try {
-    if (global.mongoose.conn) {
-      console.log("✅ Already connected to MongoDB");
-      return;
-    }
-
-    if (!global.mongoose.promise) {
-      global.mongoose.promise = mongoose.connect(MONGO_URI, {
-        dbName: "feedbacksys", // Set your database name
-      }).then((m) => m.connection); // Fix: Extract connection
-    }
-
-    global.mongoose.conn = await global.mongoose.promise;
-    console.log("🚀 MongoDB connected successfully");
-  } catch (error) {
-    console.error("❌ MongoDB connection failed:", (error as Error).message);
-    process.exit(1); // Exit process on failure
+if(!cached){
+  cached = (global as any).mongoose = {
+    conn : null,
+    promise : null
   }
-};
+}
 
-export default connectDB;
+export const connectDB = async() => {
+  if(cached.conn) return cached.conn;
+
+  cached.promise = cached.promise || mongoose.connect(MONGO_URI ,{
+    dbName : "feedbacksys",
+    bufferCommands : false,
+    connectTimeoutMS : 30000,
+  });
+
+  cached.conn = await cached.promise;
+
+  return cached.conn;
+}

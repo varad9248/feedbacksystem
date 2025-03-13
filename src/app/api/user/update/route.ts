@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { z } from "zod";
-import connectDB from "@/db/connectDB";
+import { connectDB }  from "@/db/connectDB";
 import { User } from "@/models/User.model";
 
 const updateSchema = z.object({
