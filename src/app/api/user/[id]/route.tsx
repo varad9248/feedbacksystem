@@ -1,21 +1,24 @@
 import connectDB from "@/db/connectDB";
+import { User } from "@/models/User.model";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { User } from "@/models/User.model";
 
 // Schema for user ID validation
 const paramsSchema = z.object({
   id: z.string().length(24, { message: "Invalid user ID format" }),
 });
 
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+  
   try {
     await connectDB();
 
-    const { params } = context;
-
     // Validate user ID
-    const validation = paramsSchema.safeParse(params);
+    const validation = paramsSchema.safeParse({ id });
     if (!validation.success) {
       return NextResponse.json(
         { error: validation.error.format().id?._errors[0] || "Invalid user ID" },
@@ -24,7 +27,7 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
     }
 
     // Find user by ID and exclude password
-    const user = await User.findById(params.id).select("-password");
+    const user = await User.findById(id).select("-password");
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

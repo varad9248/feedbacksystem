@@ -1,15 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { Webhook } from "svix";
 import connectDB from "@/db/connectDB";
 import { User } from "@/models/User.model";
+import { NextRequest, NextResponse } from "next/server";
 
 const CLERK_WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
-
 if (!CLERK_WEBHOOK_SECRET) {
   throw new Error("Missing CLERK_WEBHOOK_SECRET in environment variables.");
 }
 
-// Define the expected Clerk webhook event structure
 interface ClerkWebhookEvent {
   type: "user.created" | "user.updated" | "user.deleted";
   data: {
@@ -20,20 +18,21 @@ interface ClerkWebhookEvent {
   };
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
     // Verify Clerk Webhook Signature
+    const payload = await req.text(); // ✅ Fix: Read body as text
     const headers = req.headers;
-    const payload = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
-    const svixHeaders: Record<string, string> = {
-      "svix-id": headers["svix-id"] as string,
-      "svix-timestamp": headers["svix-timestamp"] as string,
-      "svix-signature": headers["svix-signature"] as string,
+
+    const svixHeaders = {
+      "svix-id": headers.get("svix-id") ?? "",
+      "svix-timestamp": headers.get("svix-timestamp") ?? "",
+      "svix-signature": headers.get("svix-signature") ?? "",
     };
 
-    const wh = new Webhook(CLERK_WEBHOOK_SECRET || '');
+    const wh = new Webhook(CLERK_WEBHOOK_SECRET || "");
     const event = wh.verify(payload, svixHeaders) as ClerkWebhookEvent;
 
     console.log("Clerk Webhook Event:", event);
@@ -58,15 +57,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await User.findOneAndDelete({ clerkId: id });
     }
 
-    return res.status(200).json({ success: true });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Webhook verification failed:", error);
-    return res.status(400).json({ error: "Webhook verification failed" });
+    return NextResponse.json({ error: "Webhook verification failed" }, { status: 400 });
   }
 }
-
-export const config = {
-  api: {
-    bodyParser: true, // Ensure body is parsed properly
-  },
-};

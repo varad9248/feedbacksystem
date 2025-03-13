@@ -6,15 +6,17 @@ if (!MONGO_URI) {
   throw new Error("❌ MONGO_URI is missing in environment variables.");
 }
 
-// Use a global variable to prevent multiple connections in serverless environments
+// Fix global type
 interface GlobalWithMongoose {
   mongoose: {
     conn: mongoose.Connection | null;
-    promise: Promise<typeof mongoose> | null;
+    promise: Promise<mongoose.Connection> | null;
   };
 }
 
-declare const global: GlobalWithMongoose;
+declare global {
+  var mongoose: GlobalWithMongoose["mongoose"];
+}
 
 global.mongoose = global.mongoose || { conn: null, promise: null };
 
@@ -27,8 +29,8 @@ const connectDB = async (): Promise<void> => {
 
     if (!global.mongoose.promise) {
       global.mongoose.promise = mongoose.connect(MONGO_URI, {
-        dbName: "feedbacksys", // Optional: Set your database name
-      });
+        dbName: "feedbacksys", // Set your database name
+      }).then((m) => m.connection); // Fix: Extract connection
     }
 
     global.mongoose.conn = await global.mongoose.promise;
